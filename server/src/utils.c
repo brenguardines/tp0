@@ -4,8 +4,6 @@ t_log* logger;
 
 int iniciar_servidor(void)
 {
-	// Quitar esta línea cuando hayamos terminado de implementar la funcion
-	assert(!"no implementado!");
 
 	int socket_servidor;
 
@@ -19,8 +17,25 @@ int iniciar_servidor(void)
 	getaddrinfo(NULL, PUERTO, &hints, &servinfo);
 
 	// Creamos el socket de escucha del servidor
+	socket_servidor = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
+	if(socket_servidor == -1){
+		perror("Error al crear socket del servidor");
+		exit(EXIT_FAILURE);
+	}
 
 	// Asociamos el socket a un puerto
+	int optval = 1;
+	setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+
+	if(bind(socket_servidor, servinfo->ai_addr, servinfo->ai_addrlen) == -1){
+		perror("Error al hacer bind");
+		exit(EXIT_FAILURE);
+	}
+
+	if(listen(socket_servidor, SOMAXCONN) == -1){
+		perror("Error al hacer listen");
+		exit(EXIT_FAILURE);
+	}
 
 	// Escuchamos las conexiones entrantes
 
@@ -32,11 +47,16 @@ int iniciar_servidor(void)
 
 int esperar_cliente(int socket_servidor)
 {
-	// Quitar esta línea cuando hayamos terminado de implementar la funcion
-	assert(!"no implementado!");
+	struct sockaddr_in dir_cliente;
+	socklen_t tam_direccion = sizeof(struct sockaddr_in);
 
 	// Aceptamos un nuevo cliente
-	int socket_cliente;
+	int socket_cliente = accept(socket_servidor, (void*)&dir_cliente, &tam_direccion);
+	if(socket_cliente == -1){
+		perror("Error al aceptar cliente");
+		exit(EXIT_FAILURE);
+	}
+	
 	log_info(logger, "Se conecto un cliente!");
 
 	return socket_cliente;
